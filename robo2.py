@@ -8,6 +8,8 @@ from processor import Processor
 webcam = cv2.VideoCapture(0)
 
 processor = Processor()
+box_size = 550
+
 
 class Video_data:
     
@@ -68,7 +70,7 @@ while(1):
 
         for pic, contour in enumerate(contours):
             area = cv2.contourArea(contour)
-            if(area > 300):
+            if(area > box_size): 
                 x, y, w, h = cv2.boundingRect(contour)
                 imageFrame = cv2.rectangle(imageFrame, (x, y), 
                                         (x + w, y + h), 
@@ -82,7 +84,7 @@ while(1):
 
                 spotted_object = Spotted_object()
                 spotted_object.location = (x,y)
-                spotted_object.colour = colour
+                spotted_object.colour = name
                 spotted_object.size = (w,h)
                 
                 found_object_list.append(spotted_object)
@@ -105,13 +107,13 @@ while(1):
     blue_lower = [110,50,50]
     blue_upper = [130,255,255]
 
-    yellow_lower = [200,200,0]
-    yellow_upper = [255,255,0]
+    yellow_lower = [20,100,100]
+    yellow_upper = [30,255,255]
 
-    imageFrame = find_colour(imageFrame, hsvFrame, 'Red Colour', red, red_lower, red_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'Green Colour', green, green_lower, green_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'Blue Colour', blue, blue_lower, blue_upper)
-    imageFrame = find_colour(imageFrame, hsvFrame, 'Yellow Colour', yellow, yellow_lower, yellow_upper)
+    imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
+    # imageFrame = find_colour(imageFrame, hsvFrame, 'green', green, green_lower, green_upper)
+    # imageFrame = find_colour(imageFrame, hsvFrame, 'blue', blue, blue_lower, blue_upper)
+    imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
 
     processor.main(found_object_list) 
 
