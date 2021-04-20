@@ -8,6 +8,9 @@ from processor import Processor
 webcam = cv2.VideoCapture(0)
 
 processor = Processor()
+
+memory = processor.Memory('green')
+
 box_size = 550
 
 
@@ -97,6 +100,7 @@ while(1):
     green = [0,255,0]
     blue = [0,0,255]
     yellow = [255,255,0]
+    black = [0,0,0]
 
     red_lower = [0, 180, 180]
     red_upper = [255, 255, 255]
@@ -110,12 +114,16 @@ while(1):
     yellow_lower = [20,100,100]
     yellow_upper = [30,255,255]
 
-    imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'green', green, green_lower, green_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'blue', blue, blue_lower, blue_upper)
-    imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
+    black_lower = [10, 100, 50]
+    black_upper = [50, 255, 255]
 
-    processor.main(found_object_list) 
+    imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
+    imageFrame = find_colour(imageFrame, hsvFrame, 'green', green, green_lower, green_upper)
+    imageFrame = find_colour(imageFrame, hsvFrame, 'blue', blue, blue_lower, blue_upper)
+    imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
+    # imageFrame = find_colour(imageFrame, hsvFrame, 'black', black, black_lower, black_upper)
+
+    memory = processor.main(found_object_list, memory) 
 
     # video_data.coord = []
 
