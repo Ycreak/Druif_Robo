@@ -34,6 +34,54 @@ class Spotted_object:
         self.colour = ""
         self.size = []
 
+def find_colour(imageFrame, hsvFrame, name, colour, colour_lower, colour_upper):
+
+    colour_lower_array = np.array(colour_lower, np.uint8)
+    colour_upper_array = np.array(colour_upper, np.uint8)
+
+    mask = cv2.inRange(hsvFrame, colour_lower_array, colour_upper_array)
+
+    # Creating contour to track red color
+    contours, hierarchy = cv2.findContours(mask,
+                                        cv2.RETR_TREE,
+                                        cv2.CHAIN_APPROX_SIMPLE)
+
+    colour.reverse() #(bgr)
+
+    # Morphological Transform, Dilation
+    # for each color and bitwise_and operator
+    # between imageFrame and mask determines
+    # to detect only that particular color
+    kernal = np.ones((5, 5), "uint8")
+    
+    # For red color
+    mask = cv2.dilate(mask, kernal)
+
+    for pic, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if(area > box_size): 
+            x, y, w, h = cv2.boundingRect(contour)
+            imageFrame = cv2.rectangle(imageFrame, (x, y), 
+                                    (x + w, y + h), 
+                                    colour, 2)
+            
+            video_data.coord.append((x,y, colour))
+            print('Coordinates: {0}-{1}'.format(x,y))              
+            
+            name = str(x) + ',' + str(y)
+            
+            cv2.putText(imageFrame, name, (x, y),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0,
+                        colour)  
+
+            spotted_object = Spotted_object()
+            spotted_object.location = (x,y)
+            spotted_object.colour = name
+            spotted_object.size = (w,h)
+            
+            found_object_list.append(spotted_object)
+
+    return imageFrame
 
 # Start a while loop
 while(1):
@@ -54,77 +102,45 @@ while(1):
     # color space
     hsvFrame = cv2.cvtColor(imageFrame, cv2.COLOR_BGR2HSV)
 
-    def find_colour(imageFrame, hsvFrame, name, colour, colour_lower, colour_upper):
+    # Red color
+    # low_red = np.array([161, 155, 84]) #BGR
+    # high_red = np.array([179, 255, 255]) #BGR
+    # red_mask = cv2.inRange(hsvFrame, low_red, high_red)
+    # red = cv2.bitwise_and(imageFrame, imageFrame, mask=red_mask)
 
-        colour_lower_array = np.array(colour_lower, np.uint8)
-        colour_upper_array = np.array(colour_upper, np.uint8)
-        # red_lower = np.array([136, 87, 111], np.uint8)
-        # red_upper = np.array([180, 255, 255], np.uint8)    
-        mask = cv2.inRange(hsvFrame, colour_lower_array, colour_upper_array)
+    # low_blue = np.array([94, 80, 2])
+    # high_blue = np.array([126, 255, 255])
+    # blue_mask = cv2.inRange(hsvFrame, low_blue, high_blue)
+    # blue = cv2.bitwise_and(imageFrame, imageFrame, mask=blue_mask)
 
-        # Creating contour to track red color
-        contours, hierarchy = cv2.findContours(mask,
-                                            cv2.RETR_TREE,
-                                            cv2.CHAIN_APPROX_SIMPLE)
-    
-        colour.reverse() #(bgr)
+    # low_green = np.array([25, 52, 72])
+    # high_green = np.array([102, 255, 255])
+    # green_mask = cv2.inRange(hsvFrame, low_green, high_green)
+    # green = cv2.bitwise_and(imageFrame, imageFrame, mask=green_mask)
 
-        # Morphological Transform, Dilation
-        # for each color and bitwise_and operator
-        # between imageFrame and mask determines
-        # to detect only that particular color
-        kernal = np.ones((5, 5), "uint8")
-        
-        # For red color
-        mask = cv2.dilate(mask, kernal)
-        # res_colour = cv2.bitwise_and(imageFrame, imageFrame, 
-        #                         mask = mask)
 
-        for pic, contour in enumerate(contours):
-            area = cv2.contourArea(contour)
-            if(area > box_size): 
-                x, y, w, h = cv2.boundingRect(contour)
-                imageFrame = cv2.rectangle(imageFrame, (x, y), 
-                                        (x + w, y + h), 
-                                        colour, 2)
-                
-                # video_data.coord.append((x,y, colour))
-                # print('Coordinates: {0}-{1}'.format(x,y))              
-                # cv2.putText(imageFrame, name, (x, y),
-                #             cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-                #             colour)  
-
-                spotted_object = Spotted_object()
-                spotted_object.location = (x,y)
-                spotted_object.colour = name
-                spotted_object.size = (w,h)
-                
-                found_object_list.append(spotted_object)
-
-        return imageFrame
-
-    # Set range for red color and 
-    # define mask
-    red = [255,0,0]
+    # # Set range for red color and 
+    # # define mask
+    # red = [255,0,0]
     green = [0,255,0]
-    blue = [0,0,255]
-    yellow = [255,255,0]
-    black = [0,0,0]
+    # blue = [0,0,255]
+    # yellow = [255,255,0]
+    # black = [0,0,0]
 
-    red_lower = [0, 180, 180]
-    red_upper = [255, 255, 255]
+    # red_lower = [0, 180, 180]
+    # red_upper = [255, 255, 255]
 
-    green_lower = [25, 100, 72]
-    green_upper = [90, 255, 200]
+    green_lower = [25, 52, 72]
+    green_upper = [102, 255, 255]
 
-    blue_lower = [110,50,50]
-    blue_upper = [130,255,255]
+    # blue_lower = [110,50,50]
+    # blue_upper = [130,255,255]
 
-    yellow_lower = [20,100,100]
-    yellow_upper = [30,255,255]
+    # yellow_lower = [20,100,100]
+    # yellow_upper = [30,255,255]
 
-    black_lower = [10, 100, 50]
-    black_upper = [50, 255, 255]
+    # black_lower = [10, 100, 50]
+    # black_upper = [50, 255, 255]
 
     # imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
     imageFrame = find_colour(imageFrame, hsvFrame, 'green', green, green_lower, green_upper)
@@ -132,12 +148,15 @@ while(1):
     # imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
     # imageFrame = find_colour(imageFrame, hsvFrame, 'black', black, black_lower, black_upper)
 
-    memory = processor.main(found_object_list, memory) 
+    # memory = processor.main(found_object_list, memory) 
 
     # video_data.coord = []
 
     # Program Termination
-    # cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
+    cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
+    # cv2.imshow("Red", red)
+    # cv2.imshow("Blue", blue)
+    # cv2.imshow("Green", green)
 
     print('#############################')
 
