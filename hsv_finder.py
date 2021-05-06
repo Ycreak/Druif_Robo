@@ -4,12 +4,15 @@ import argparse
 
 max_value = 255
 max_value_H = 360//2
-low_H = 0
-low_S = 0
-low_V = 0
-high_H = max_value_H
-high_S = max_value
-high_V = max_value
+low_H = 85
+high_H = 140
+
+low_S = 64
+high_S = 255
+
+low_V = 15
+high_V = 255
+
 window_capture_name = 'Video Capture'
 window_detection_name = 'Object Detection'
 low_H_name = 'Low H'
@@ -86,7 +89,7 @@ while True:
     frame_HSV = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
     frame_threshold = cv.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
     
-    cv.imshow(window_capture_name, frame)
+    # cv.imshow(window_capture_name, frame)
     cv.imshow(window_detection_name, frame_threshold)
     
     key = cv.waitKey(30)

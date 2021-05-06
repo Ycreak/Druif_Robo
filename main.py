@@ -3,7 +3,7 @@ import numpy as np
 from cv2 import cv2
 
 from colour import Color
-from processor import Processor
+# from processor import Processor
 # Capturing video through webcam
 
 frame_width = 800
@@ -14,19 +14,12 @@ webcam = cv2.VideoCapture(0)
 webcam.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
 webcam.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
-processor = Processor(frame_width, frame_height)
+# processor = Processor(frame_width, frame_height)
 
-memory = processor.Memory('green')
+# memory = processor.Memory('green')
 
 box_size = 550
 
-
-class Video_data:
-    
-    def __init__(self):
-
-        self.coord = []
-    
 class Spotted_object:
 
     def __init__(self):
@@ -34,132 +27,121 @@ class Spotted_object:
         self.colour = ""
         self.size = []
 
-def find_colour(imageFrame, hsvFrame, name, colour, colour_lower, colour_upper):
+# def find_colour(imageFrame, hsvFrame, name, colour, colour_lower, colour_upper):
 
-    colour_lower_array = np.array(colour_lower, np.uint8)
-    colour_upper_array = np.array(colour_upper, np.uint8)
+#     colour_lower_array = np.array(colour_lower, np.uint8)
+#     colour_upper_array = np.array(colour_upper, np.uint8)
 
-    mask = cv2.inRange(hsvFrame, colour_lower_array, colour_upper_array)
+#     mask = cv2.inRange(hsvFrame, colour_lower_array, colour_upper_array)
+
+#     # Creating contour to track red color
+#     contours, hierarchy = cv2.findContours(mask,
+#                                         cv2.RETR_TREE,
+#                                         cv2.CHAIN_APPROX_SIMPLE)
+
+#     colour.reverse() #(bgr)
+
+#     # Morphological Transform, Dilation
+#     # for each color and bitwise_and operator
+#     # between imageFrame and mask determines
+#     # to detect only that particular color
+#     kernal = np.ones((5, 5), "uint8")
+    
+#     # For red color
+#     mask = cv2.dilate(mask, kernal)
+
+#     for pic, contour in enumerate(contours):
+#         area = cv2.contourArea(contour)
+#         if(area > box_size): 
+#             x, y, w, h = cv2.boundingRect(contour)
+#             imageFrame = cv2.rectangle(imageFrame, (x, y), 
+#                                     (x + w, y + h), 
+#                                     colour, 2)
+            
+#             # video_data.coord.append((x,y, colour))
+#             print('Coordinates: {0}-{1}'.format(x,y))              
+            
+#             name = str(x) + ',' + str(y)
+            
+#             cv2.putText(imageFrame, name, (x, y),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 1.0,
+#                         colour)  
+
+#             spotted_object = Spotted_object()
+#             spotted_object.location = (x,y)
+#             spotted_object.colour = name
+#             spotted_object.size = (w,h)
+            
+#             found_object_list.append(spotted_object)
+
+#     return imageFrame
+
+def find_colour(imageFrame, hsvFrame, colour):
+
+    frame_threshold = cv2.inRange(hsvFrame, 
+        (colour.H_low, colour.S_low, colour.V_low), (colour.H_high, colour.S_high, colour.V_high))
 
     # Creating contour to track red color
-    contours, hierarchy = cv2.findContours(mask,
+    contours, _ = cv2.findContours(frame_threshold,
                                         cv2.RETR_TREE,
                                         cv2.CHAIN_APPROX_SIMPLE)
 
-    colour.reverse() #(bgr)
+    kernal = np.ones((5, 5), "uint8") 
+    frame_threshold = cv2.dilate(frame_threshold, kernal)
 
-    # Morphological Transform, Dilation
-    # for each color and bitwise_and operator
-    # between imageFrame and mask determines
-    # to detect only that particular color
-    kernal = np.ones((5, 5), "uint8")
-    
-    # For red color
-    mask = cv2.dilate(mask, kernal)
-
-    for pic, contour in enumerate(contours):
+    for _, contour in enumerate(contours):
         area = cv2.contourArea(contour)
         if(area > box_size): 
             x, y, w, h = cv2.boundingRect(contour)
             imageFrame = cv2.rectangle(imageFrame, (x, y), 
                                     (x + w, y + h), 
-                                    colour, 2)
+                                    colour.colour, 2)
             
-            video_data.coord.append((x,y, colour))
+            # video_data.coord.append((x,y, (0,255,0)))
             print('Coordinates: {0}-{1}'.format(x,y))              
             
             name = str(x) + ',' + str(y)
             
             cv2.putText(imageFrame, name, (x, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-                        colour)  
-
-            spotted_object = Spotted_object()
-            spotted_object.location = (x,y)
-            spotted_object.colour = name
-            spotted_object.size = (w,h)
-            
-            found_object_list.append(spotted_object)
+                        colour.colour)  
 
     return imageFrame
 
+class HSV_Colour():
+    def __init__(self, H_low, H_high, S_low, S_high, V_low, V_high, colour=[255,255,255]):
+        self.H_low = H_low
+        self.H_high = H_high
+        
+        self.S_low = S_low
+        self.S_high = S_high
+
+        self.V_low = V_low
+        self.V_high = V_high
+
+        self.colour = colour
+
+green = HSV_Colour(35,94,50,255,15,255, [0,255,0])
+blue = HSV_Colour(105,140,90,255,35,255, [255,0,0])
+# red = HSV_Colour(56,94,71,255,15,255, [0,0,255])
+
 # Start a while loop
 while(1):
-
     found_object_list = []
-
-    video_data = Video_data()
-
-    # Reading the video from the
-    # webcam in image frames
+    # Read Video data
     _, imageFrame = webcam.read()
-
-    imageFrame = cv2.flip(imageFrame,-1)
-
-    # Convert the imageFrame in 
-    # BGR(RGB color space) to 
-    # HSV(hue-saturation-value)
-    # color space
+    # imageFrame = cv2.flip(imageFrame,-1)
+    # Convert colour space
     hsvFrame = cv2.cvtColor(imageFrame, cv2.COLOR_BGR2HSV)
-
-    # Red color
-    # low_red = np.array([161, 155, 84]) #BGR
-    # high_red = np.array([179, 255, 255]) #BGR
-    # red_mask = cv2.inRange(hsvFrame, low_red, high_red)
-    # red = cv2.bitwise_and(imageFrame, imageFrame, mask=red_mask)
-
-    # low_blue = np.array([94, 80, 2])
-    # high_blue = np.array([126, 255, 255])
-    # blue_mask = cv2.inRange(hsvFrame, low_blue, high_blue)
-    # blue = cv2.bitwise_and(imageFrame, imageFrame, mask=blue_mask)
-
-    # low_green = np.array([25, 52, 72])
-    # high_green = np.array([102, 255, 255])
-    # green_mask = cv2.inRange(hsvFrame, low_green, high_green)
-    # green = cv2.bitwise_and(imageFrame, imageFrame, mask=green_mask)
-
-
-    # # Set range for red color and 
-    # # define mask
-    # red = [255,0,0]
-    green = [0,255,0]
-    # blue = [0,0,255]
-    # yellow = [255,255,0]
-    # black = [0,0,0]
-
-    # red_lower = [0, 180, 180]
-    # red_upper = [255, 255, 255]
-
-    green_lower = [25, 52, 72]
-    green_upper = [102, 255, 255]
-
-    # blue_lower = [110,50,50]
-    # blue_upper = [130,255,255]
-
-    # yellow_lower = [20,100,100]
-    # yellow_upper = [30,255,255]
-
-    # black_lower = [10, 100, 50]
-    # black_upper = [50, 255, 255]
-
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
-    imageFrame = find_colour(imageFrame, hsvFrame, 'green', green, green_lower, green_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'blue', blue, blue_lower, blue_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
-    # imageFrame = find_colour(imageFrame, hsvFrame, 'black', black, black_lower, black_upper)
-
+    # Draw the coloured boxes
+    imageFrame = find_colour(imageFrame, hsvFrame, green)
+    imageFrame = find_colour(imageFrame, hsvFrame, blue)
+    # Process the frame
     # memory = processor.main(found_object_list, memory) 
-
-    # video_data.coord = []
-
-    # Program Termination
+    # Show the frame (with a nice title)
     cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
-    # cv2.imshow("Red", red)
-    # cv2.imshow("Blue", blue)
-    # cv2.imshow("Green", green)
-
     print('#############################')
-
+    # Program Termination
     if cv2.waitKey(10) & 0xFF == ord('q'):
         webcam.release()
         cv2.destroyAllWindows()
