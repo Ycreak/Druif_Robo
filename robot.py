@@ -32,10 +32,10 @@ def stop():
 try:
     while True:
         print('forward')
-        go_forward(0.2)
+        go_forward(0.1)
         sleep(1)
         print('backward')
-        go_backward(0.2)
+        go_backward(0.1)
         sleep(1)
         # print('left')
         # go_left(0.2)

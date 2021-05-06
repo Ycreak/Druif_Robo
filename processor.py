@@ -1,6 +1,10 @@
 from playsound import playsound
 import time
 
+# Motor
+from gpiozero import Motor
+from time import sleep
+import RPi.GPIO as GPIO  
 
 
 class Goal:
@@ -10,9 +14,40 @@ class Goal:
     self.colour = colour
 
 class Processor:
-  def __init__(self):
+  def __init__(self, frame_width, frame_height):
 
-    self.free = True
+    GPIO.setmode(GPIO.BCM)
+    GPIO.cleanup() 
+
+    self.motor_left = Motor(forward=11,backward=8)
+    self.motor_right = Motor(forward=9,backward=25)
+    
+    self.frame_width = frame_width
+    self.frame_height = frame_height
+
+    # Vacancy of the ride
+    self.free = False
+
+  def go_left(self, speed):
+    self.motor_left.backward(speed)
+    self.motor_right.forward(speed)
+
+  def go_right(self, speed):
+    self.motor_left.forward(speed)
+    self.motor_right.backward(speed)
+
+  def go_forward(self, speed):
+    self.motor_left.forward(speed)
+    self.motor_right.forward(speed)
+
+  def go_backward(self, speed):
+    self.motor_left.backward(speed)
+    self.motor_right.backward(speed)
+
+  def stop(self):
+    self.motor_left.stop()
+    self.motor_right.stop()
+
 
   class Memory:
     def __init__(self, colour):
@@ -44,6 +79,7 @@ class Processor:
         objects ([type]): [description]
     """    
     
+
     # TODO: drive around objects!
     goal_colour = 'green'
 
@@ -89,7 +125,7 @@ class Processor:
                   print('LEGO FIGURE with shirt colour {0}'.format(object.colour))
                   if self.drive_toward_object(object):
                     # Now the LEGO figure has been reached
-                    playsound("arrived.ogg")    # Play the sound effect
+                    # playsound("arrived.ogg")    # Play the sound effect
                     # time.sleep(2.0)             # Wait a few seconds
                     self.free = False           # Now we are occupied
                     goal_colour = object.colour # Set the colour to our goal TODO: i want this in an object
@@ -106,7 +142,9 @@ class Processor:
           print('No objects found in view')
           # Continue driving
 
-    else:
+    else: # WE ARE FINDING A BUILDING HERE
+      self.stop()
+
       # We are occupied, find the destination
       # print("Where is the {0} building?".format(goal_colour))
       if objects:
@@ -122,20 +160,21 @@ class Processor:
         if no_yellow:
           for object in objects:
             if object.colour == goal_colour: # This assumes only one goal color remains (maybe find biggest)
-                if self.drive_toward_object(object):
-                  # Now the LEGO figure has been reached
-                  playsound("arrived.ogg")    # Play the sound effect
-                  time.sleep(3.0)             # Wait a few seconds
-                  self.free = True            # Now we are occupied
-                  goal_colour = 'none'       # Set the colour to our goal TODO: i want this in an object
-                  exit(0)
-                  break                       # Break out of the loop
+                self.drive_toward_object(object)
+                break                       # Break out of the loop
+                  # # Now the LEGO figure has been reached
+                  # # playsound("arrived.ogg")    # Play the sound effect
+                  # time.sleep(3.0)             # Wait a few seconds
+                  # self.free = True            # Now we are occupied
+                  # goal_colour = 'none'       # Set the colour to our goal TODO: i want this in an object
+                  # exit(0)
             else:
               print('Goal not found')
               # Continue driving
-
+            pass
       else:
         print("No objects found.")
+        # self.go_left(0.15)
         # Continue driving
 
     return memory
@@ -143,17 +182,32 @@ class Processor:
 
   def drive_toward_object(self, object):
     x, y = object.location
+    w,h = object.size
 
-    if y < 100: # If it reaches top of screen, it is probably very close
+    # Find the centre of the object
+    x = x + (w / 2)
+
+    print(x, y)
+    offset = 50
+
+    if y < 20: # If it reaches top of screen, it is probably very close
       print("destination reached") # TODO: this need tweaking
-      return True
-    elif x > 270: # Try to centre the object
-      print("drive left") # i cant think mirrored
-    elif x < 210:
-      print("drive right")
+      # return True
+    elif x > (self.frame_width / 2 + offset): # Try to centre the object
+      print("drive right") # i cant think mirrored
+      self.go_right(0.15)
+      # sleep(0.2)
+      # self.stop()
+    elif x < (self.frame_width / 2 - offset):
+      print("drive left")
+      self.go_left(0.15)
+      # sleep(0.2)
+      # self.stop()
     else:
       print("drive forward")
+      self.go_forward(0.15)
+      # sleep(0.2)
+      # self.stop()
+    print("X: {0}, W_r: {1}, W_l: {2}".format(x, (self.frame_width / 2 + offset), (self.frame_width / 2 - offset)))
 
-    print(x,y)
-
-    return False
+    # return False

@@ -5,9 +5,16 @@ from cv2 import cv2
 from colour import Color
 from processor import Processor
 # Capturing video through webcam
+
+frame_width = 800
+frame_height = 600
+
 webcam = cv2.VideoCapture(0)
 
-processor = Processor()
+webcam.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+webcam.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
+
+processor = Processor(frame_width, frame_height)
 
 memory = processor.Memory('green')
 
@@ -25,7 +32,7 @@ class Spotted_object:
     def __init__(self):
         self.location = []
         self.colour = ""
-        self.size = 0
+        self.size = []
 
 
 # Start a while loop
@@ -38,7 +45,9 @@ while(1):
     # Reading the video from the
     # webcam in image frames
     _, imageFrame = webcam.read()
-  
+
+    imageFrame = cv2.flip(imageFrame,-1)
+
     # Convert the imageFrame in 
     # BGR(RGB color space) to 
     # HSV(hue-saturation-value)
@@ -58,7 +67,7 @@ while(1):
                                             cv2.RETR_TREE,
                                             cv2.CHAIN_APPROX_SIMPLE)
     
-        colour.reverse() # Dumb hack to fix this code
+        colour.reverse() #(bgr)
 
         # Morphological Transform, Dilation
         # for each color and bitwise_and operator
@@ -81,9 +90,9 @@ while(1):
                 
                 # video_data.coord.append((x,y, colour))
                 # print('Coordinates: {0}-{1}'.format(x,y))              
-                cv2.putText(imageFrame, name, (x, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-                            colour)  
+                # cv2.putText(imageFrame, name, (x, y),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 1.0,
+                #             colour)  
 
                 spotted_object = Spotted_object()
                 spotted_object.location = (x,y)
@@ -117,10 +126,10 @@ while(1):
     black_lower = [10, 100, 50]
     black_upper = [50, 255, 255]
 
-    imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
+    # imageFrame = find_colour(imageFrame, hsvFrame, 'red', red, red_lower, red_upper)
     imageFrame = find_colour(imageFrame, hsvFrame, 'green', green, green_lower, green_upper)
-    imageFrame = find_colour(imageFrame, hsvFrame, 'blue', blue, blue_lower, blue_upper)
-    imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
+    # imageFrame = find_colour(imageFrame, hsvFrame, 'blue', blue, blue_lower, blue_upper)
+    # imageFrame = find_colour(imageFrame, hsvFrame, 'yellow', yellow, yellow_lower, yellow_upper)
     # imageFrame = find_colour(imageFrame, hsvFrame, 'black', black, black_lower, black_upper)
 
     memory = processor.main(found_object_list, memory) 
@@ -128,11 +137,11 @@ while(1):
     # video_data.coord = []
 
     # Program Termination
-    cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
+    # cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
 
     print('#############################')
 
     if cv2.waitKey(10) & 0xFF == ord('q'):
-        cap.release()
+        webcam.release()
         cv2.destroyAllWindows()
         break
