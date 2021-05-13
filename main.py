@@ -3,7 +3,7 @@ import numpy as np
 from cv2 import cv2
 
 from colour import Color
-# from processor import Processor
+from processor import Processor
 # Capturing video through webcam
 
 frame_width = 800
@@ -14,9 +14,9 @@ webcam = cv2.VideoCapture(0)
 webcam.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
 webcam.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
-# processor = Processor(frame_width, frame_height)
+processor = Processor(frame_width, frame_height)
 
-# memory = processor.Memory('green')
+memory = processor.Memory('green')
 
 box_size = 550
 
@@ -106,6 +106,13 @@ def find_colour(imageFrame, hsvFrame, colour):
                         cv2.FONT_HERSHEY_SIMPLEX, 1.0,
                         colour.colour)  
 
+            spotted_object = Spotted_object()
+            spotted_object.location = (x,y)
+            spotted_object.colour = 'green'
+            spotted_object.size = (w,h)
+            
+            found_object_list.append(spotted_object)
+
     return imageFrame
 
 class HSV_Colour():
@@ -121,7 +128,7 @@ class HSV_Colour():
 
         self.colour = colour
 
-green = HSV_Colour(35,94,50,255,15,255, [0,255,0])
+green = HSV_Colour(35,94,50,255,50,255, [0,255,0])
 blue = HSV_Colour(105,140,90,255,35,255, [255,0,0])
 # red = HSV_Colour(56,94,71,255,15,255, [0,0,255])
 
@@ -130,16 +137,16 @@ while(1):
     found_object_list = []
     # Read Video data
     _, imageFrame = webcam.read()
-    # imageFrame = cv2.flip(imageFrame,-1)
+    imageFrame = cv2.flip(imageFrame,-1)
     # Convert colour space
     hsvFrame = cv2.cvtColor(imageFrame, cv2.COLOR_BGR2HSV)
     # Draw the coloured boxes
     imageFrame = find_colour(imageFrame, hsvFrame, green)
-    imageFrame = find_colour(imageFrame, hsvFrame, blue)
+    # imageFrame = find_colour(imageFrame, hsvFrame, blue)
     # Process the frame
-    # memory = processor.main(found_object_list, memory) 
+    memory = processor.main(found_object_list, memory) 
     # Show the frame (with a nice title)
-    cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
+    # cv2.imshow("Multiple Color Detection in Real-Time", imageFrame)
     print('#############################')
     # Program Termination
     if cv2.waitKey(10) & 0xFF == ord('q'):

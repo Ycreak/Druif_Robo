@@ -4,14 +4,17 @@ import argparse
 
 max_value = 255
 max_value_H = 360//2
-low_H = 85
-high_H = 140
+low_H = 35
+high_H = 94
 
-low_S = 64
+low_S = 50
 high_S = 255
 
 low_V = 15
 high_V = 255
+
+# green = HSV_Colour(35,94,50,255,15,255, [0,255,0])
+
 
 window_capture_name = 'Video Capture'
 window_detection_name = 'Object Detection'

@@ -148,30 +148,31 @@ class Processor:
       # We are occupied, find the destination
       # print("Where is the {0} building?".format(goal_colour))
       if objects:
+        print('hi')
         # Find one with the correct colour that is not a LEGO figure
 
-        no_yellow = True
-        # Dirty hack, we dont want yellow in this frame
-        for object in objects:
-          if object.colour == 'yellow':
-            no_yellow = False
-            break
+        # no_yellow = True
+        # # Dirty hack, we dont want yellow in this frame
+        # for object in objects:
+        #   if object.colour == 'yellow':
+        #     no_yellow = False
+        #     break
 
-        if no_yellow:
-          for object in objects:
-            if object.colour == goal_colour: # This assumes only one goal color remains (maybe find biggest)
-                self.drive_toward_object(object)
-                break                       # Break out of the loop
-                  # # Now the LEGO figure has been reached
-                  # # playsound("arrived.ogg")    # Play the sound effect
-                  # time.sleep(3.0)             # Wait a few seconds
-                  # self.free = True            # Now we are occupied
-                  # goal_colour = 'none'       # Set the colour to our goal TODO: i want this in an object
-                  # exit(0)
-            else:
-              print('Goal not found')
-              # Continue driving
-            pass
+        # if no_yellow:
+        for object in objects:
+          if object.colour == goal_colour: # This assumes only one goal color remains (maybe find biggest)
+              self.drive_toward_object(object)
+              break                       # Break out of the loop
+                # # Now the LEGO figure has been reached
+                # # playsound("arrived.ogg")    # Play the sound effect
+                # time.sleep(3.0)             # Wait a few seconds
+                # self.free = True            # Now we are occupied
+                # goal_colour = 'none'       # Set the colour to our goal TODO: i want this in an object
+                # exit(0)
+          else:
+            print('Goal not found')
+            # Continue driving
+          pass
       else:
         print("No objects found.")
         # self.go_left(0.15)
@@ -188,26 +189,31 @@ class Processor:
     x = x + (w / 2)
 
     print(x, y)
-    offset = 50
+    offset = 150
 
     if y < 20: # If it reaches top of screen, it is probably very close
       print("destination reached") # TODO: this need tweaking
+      exit(0)
       # return True
     elif x > (self.frame_width / 2 + offset): # Try to centre the object
       print("drive right") # i cant think mirrored
-      self.go_right(0.15)
+      self.go_right(0.2)
       # sleep(0.2)
       # self.stop()
     elif x < (self.frame_width / 2 - offset):
       print("drive left")
-      self.go_left(0.15)
+      self.go_left(0.2)
       # sleep(0.2)
       # self.stop()
     else:
       print("drive forward")
-      self.go_forward(0.15)
+      self.go_forward(0.2)
       # sleep(0.2)
       # self.stop()
     print("X: {0}, W_r: {1}, W_l: {2}".format(x, (self.frame_width / 2 + offset), (self.frame_width / 2 - offset)))
+
+    # COMMENT THIS FOR DEMONSTRATION
+    sleep(0.1)
+    self.stop()
 
     # return False
