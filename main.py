@@ -21,62 +21,14 @@ memory = processor.Memory('green')
 box_size = 550
 
 class Spotted_object:
-
+    # Object to save a spotted object in
     def __init__(self):
         self.location = []
         self.colour = ""
         self.size = []
 
-# def find_colour(imageFrame, hsvFrame, name, colour, colour_lower, colour_upper):
-
-#     colour_lower_array = np.array(colour_lower, np.uint8)
-#     colour_upper_array = np.array(colour_upper, np.uint8)
-
-#     mask = cv2.inRange(hsvFrame, colour_lower_array, colour_upper_array)
-
-#     # Creating contour to track red color
-#     contours, hierarchy = cv2.findContours(mask,
-#                                         cv2.RETR_TREE,
-#                                         cv2.CHAIN_APPROX_SIMPLE)
-
-#     colour.reverse() #(bgr)
-
-#     # Morphological Transform, Dilation
-#     # for each color and bitwise_and operator
-#     # between imageFrame and mask determines
-#     # to detect only that particular color
-#     kernal = np.ones((5, 5), "uint8")
-    
-#     # For red color
-#     mask = cv2.dilate(mask, kernal)
-
-#     for pic, contour in enumerate(contours):
-#         area = cv2.contourArea(contour)
-#         if(area > box_size): 
-#             x, y, w, h = cv2.boundingRect(contour)
-#             imageFrame = cv2.rectangle(imageFrame, (x, y), 
-#                                     (x + w, y + h), 
-#                                     colour, 2)
-            
-#             # video_data.coord.append((x,y, colour))
-#             print('Coordinates: {0}-{1}'.format(x,y))              
-            
-#             name = str(x) + ',' + str(y)
-            
-#             cv2.putText(imageFrame, name, (x, y),
-#                         cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-#                         colour)  
-
-#             spotted_object = Spotted_object()
-#             spotted_object.location = (x,y)
-#             spotted_object.colour = name
-#             spotted_object.size = (w,h)
-            
-#             found_object_list.append(spotted_object)
-
-#     return imageFrame
-
 def find_colour(imageFrame, hsvFrame, colour):
+    # Finds the given colour on the frame and draws a rectangle around it
 
     frame_threshold = cv2.inRange(hsvFrame, 
         (colour.H_low, colour.S_low, colour.V_low), (colour.H_high, colour.S_high, colour.V_high))
@@ -91,20 +43,20 @@ def find_colour(imageFrame, hsvFrame, colour):
 
     for _, contour in enumerate(contours):
         area = cv2.contourArea(contour)
-        if(area > box_size): 
+        if(500<area<5000): 
             x, y, w, h = cv2.boundingRect(contour)
             imageFrame = cv2.rectangle(imageFrame, (x, y), 
                                     (x + w, y + h), 
                                     colour.colour, 2)
             
             # video_data.coord.append((x,y, (0,255,0)))
-            print('Coordinates: {0}-{1}'.format(x,y))              
+            # print('Coordinates: {0}-{1}'.format(x,y))              
             
-            name = str(x) + ',' + str(y)
+            # name = str(x) + ',' + str(y)
             
-            cv2.putText(imageFrame, name, (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-                        colour.colour)  
+            # cv2.putText(imageFrame, name, (x, y),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 1.0,
+            #             colour.colour)  
 
             spotted_object = Spotted_object()
             spotted_object.location = (x,y)
@@ -116,7 +68,8 @@ def find_colour(imageFrame, hsvFrame, colour):
     return imageFrame
 
 class HSV_Colour():
-    def __init__(self, H_low, H_high, S_low, S_high, V_low, V_high, colour=[255,255,255]):
+    # Object to save a HSV colour in
+    def __init__(self, H_low, H_high, S_low, S_high, V_low, V_high, name, colour=[255,255,255]):
         self.H_low = H_low
         self.H_high = H_high
         
@@ -127,6 +80,7 @@ class HSV_Colour():
         self.V_high = V_high
 
         self.colour = colour
+        self.name = name
 
 green = HSV_Colour(35,94,50,255,50,255, [0,255,0])
 blue = HSV_Colour(105,140,90,255,35,255, [255,0,0])
@@ -134,6 +88,9 @@ blue = HSV_Colour(105,140,90,255,35,255, [255,0,0])
 
 # Start a while loop
 while(1):
+    
+    start = time.time()
+    
     found_object_list = []
     # Read Video data
     _, imageFrame = webcam.read()

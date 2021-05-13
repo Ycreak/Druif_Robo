@@ -81,7 +81,7 @@ class Processor:
     
 
     # TODO: drive around objects!
-    goal_colour = 'green'
+    # memory.colour = 'blue'
 
     if self.free: 
       # Find a LEGO figure to pickup
@@ -210,7 +210,7 @@ class Processor:
       self.go_forward(0.2)
       # sleep(0.2)
       # self.stop()
-    print("X: {0}, W_r: {1}, W_l: {2}".format(x, (self.frame_width / 2 + offset), (self.frame_width / 2 - offset)))
+    print("Object Centre: {0}, W_l: {1}, W_r: {2}".format(x, (self.frame_width / 2 - offset), (self.frame_width / 2 + offset)))
 
     # COMMENT THIS FOR DEMONSTRATION
     sleep(0.1)
