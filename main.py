@@ -21,7 +21,7 @@ memory = processor.Memory('green')
 box_size = 550
 
 class Spotted_object:
-
+    # Object to save a spotted object in
     def __init__(self):
         self.location = []
         self.colour = ""
@@ -79,7 +79,8 @@ def find_colour(imageFrame, hsvFrame, colour):
     return imageFrame, mask, xPos
 
 class HSV_Colour():
-    def __init__(self, H_low, H_high, S_low, S_high, V_low, V_high, colour=[255,255,255]):
+    # Object to save a HSV colour in
+    def __init__(self, H_low, H_high, S_low, S_high, V_low, V_high, name, colour=[255,255,255]):
         self.H_low = H_low
         self.H_high = H_high
         
@@ -90,6 +91,7 @@ class HSV_Colour():
         self.V_high = V_high
 
         self.colour = colour
+        self.name = name
 
 green = HSV_Colour(35,94,50,255,50,255, [0,255,0])
 # blue = HSV_Colour(105,140,90,255,35,255, [255,0,0])

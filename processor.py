@@ -85,7 +85,7 @@ class Processor:
     speed = 0.2
     offset = 100
     # TODO: drive around objects!
-    goal_colour = 'green'
+    # memory.colour = 'blue'
 
     boundary_left = self.width/2 - offset
     boundary_right = self.width/2 + offset
@@ -232,6 +232,6 @@ class Processor:
       self.go_forward(0.2)
       # sleep(0.2)
       # self.stop()
-    print("X: {0}, W_r: {1}, W_l: {2}".format(x, (self.frame_width / 2 + offset), (self.frame_width / 2 - offset)))
+    print("Object Centre: {0}, W_l: {1}, W_r: {2}".format(x, (self.frame_width / 2 - offset), (self.frame_width / 2 + offset)))
 
     # return False
