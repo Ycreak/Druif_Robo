@@ -19,11 +19,11 @@ class Processor:
     GPIO.setmode(GPIO.BCM)
     GPIO.cleanup() 
 
-    self.motor_left = Motor(forward=11,backward=8)
-    self.motor_right = Motor(forward=9,backward=25)
+    self.motor_left = Motor(forward=20,backward=26)
+    self.motor_right = Motor(forward=16,backward=19)
     
-    self.frame_width = frame_width
-    self.frame_height = frame_height
+    self.width = frame_width
+    self.height = frame_height
 
     # Vacancy of the ride
     self.free = False
@@ -48,6 +48,9 @@ class Processor:
     self.motor_left.stop()
     self.motor_right.stop()
 
+  def drive(self, right, left):
+    self.motor_left.forward(left)
+    self.motor_right.forward(right)
 
   class Memory:
     def __init__(self, colour):
@@ -68,7 +71,7 @@ class Processor:
     return biggest, biggest_object
 
 
-  def main(self, objects, memory):   
+  def main(self, xPos, memory):   
     """
     1. Search for LEGO Figures.
         Find Yellow and the color underneath
@@ -79,9 +82,28 @@ class Processor:
         objects ([type]): [description]
     """    
     
-
+    speed = 0.2
+    offset = 100
     # TODO: drive around objects!
     goal_colour = 'green'
+
+    boundary_left = self.width/2 - offset
+    boundary_right = self.width/2 + offset
+
+    print('xPos: {0}, left: {1}, right: {2}'.format(xPos, boundary_left, boundary_right))
+
+    if xPos > boundary_right:
+        self.go_right(speed)
+
+    elif xPos < boundary_left:
+        self.go_left(speed)
+
+    else:
+        pass
+        # self.go_forward(speed)
+
+    return memory
+    pass
 
     if self.free: 
       # Find a LEGO figure to pickup
@@ -211,9 +233,5 @@ class Processor:
       # sleep(0.2)
       # self.stop()
     print("X: {0}, W_r: {1}, W_l: {2}".format(x, (self.frame_width / 2 + offset), (self.frame_width / 2 - offset)))
-
-    # COMMENT THIS FOR DEMONSTRATION
-    sleep(0.1)
-    self.stop()
 
     # return False
