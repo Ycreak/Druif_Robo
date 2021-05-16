@@ -27,13 +27,18 @@ class Processor:
 
     # Vacancy of the ride
     self.free = False
+    self.speed = 0.15
+    self.offset = 75
+
+    self.boundary_left = self.width/2 - self.offset
+    self.boundary_right = self.width/2 + self.offset
 
   def go_left(self, speed):
     self.motor_left.backward(speed)
-    self.motor_right.forward(speed)
+    # self.motor_right.forward(speed)
 
   def go_right(self, speed):
-    self.motor_left.forward(speed)
+    # self.motor_left.forward(speed)
     self.motor_right.backward(speed)
 
   def go_forward(self, speed):
@@ -52,26 +57,43 @@ class Processor:
     self.motor_left.forward(left)
     self.motor_right.forward(right)
 
-  class Memory:
-    def __init__(self, colour):
+  def Find_largest(self, objects, colour):
+    
+    biggest = 0
 
-      # self.goal = goal
-      self.goal_colour = colour  
+    for object in objects:
+      if object.colour == colour:    
+        w,h = object.size
 
-  def Check_largest(self, object, biggest):
-    w,h = object.size
-    # Assignment
-    biggest_object = object
+        if (w*h) > biggest:
+          biggest_object = object
+          biggest = w*h
 
+    try:
+      x, y = biggest_object.location
+      w, h = biggest_object.size
 
-    if (w+h) > biggest:
-      biggest_object = object
-      biggest = w+h
+      # Find the centre of the object
+      biggest_object.centre = x + (w / 2)
 
-    return biggest, biggest_object
+      return biggest_object
 
+    except:
+      return None
 
-  def main(self, xPos, memory):   
+  def Find_tallest(self, objects):
+    tallest = 0
+
+    for object in objects:
+      w,h = object.size
+
+      if h > tallest:
+        tallest_object = object
+        tallest = h
+
+    return tallest_object
+
+  def main(self, memory, objects):   
     """
     1. Search for LEGO Figures.
         Find Yellow and the color underneath
@@ -81,157 +103,86 @@ class Processor:
     Args:
         objects ([type]): [description]
     """    
+
+    # Stop motors and await new orders
+    self.stop()
+
+    if memory.free:
+      ''' We are going to interpret the LEGO figure and bring him to his destination '''
+
+      # If we cannot find objects, return memory
+      if not objects:
+        print('No objects found!')
+        self.stop()
+        return memory
+
+      else:
+        yellow_objects = [x for x in objects if x.colour == 'yellow']
+        if yellow_objects:
+          lego_head = self.Find_largest(yellow_objects, 'yellow')
+          # Find the location of the neck of the figure, where it should meet a shirt
+          lego_neck = lego_head.location[1] + lego_head.size[1] # head.x + head.height
+        else:
+          print('No LEGO figure found')
+          return memory
+        # Now check if there is an object under the lego head, which should be a shirt
+        for object in objects:
+          if(object.location[1] in range(lego_neck - 20, lego_neck + 20)) and object.colour != 'yellow':
+            print('LEGO FIGURE with shirt colour {0}'.format(object.colour))
+            # Set goal colour and vacancy status
+            memory.goal_colour = object.colour
+            memory.free = False
+            sleep(2) # Sleep to allow for LEGO withdrawal
+            return memory
+
+        # If nothing is found, just return the memory
+        return memory
     
-    speed = 0.2
-    offset = 100
-    # TODO: drive around objects!
-    # memory.colour = 'blue'
-
-    boundary_left = self.width/2 - offset
-    boundary_right = self.width/2 + offset
-
-    print('xPos: {0}, left: {1}, right: {2}'.format(xPos, boundary_left, boundary_right))
-
-    if xPos > boundary_right:
-        self.go_right(speed)
-
-    elif xPos < boundary_left:
-        self.go_left(speed)
-
     else:
-        pass
-        # self.go_forward(speed)
+      ''' We have a customer, let's bring him to his building '''
+      print('Our destination is the {0} building.'.format(memory.goal_colour))
+      
+      destination_objects = [x for x in objects if x.colour == memory.goal_colour]
+      # print('dest_obj', destination_objects)
 
-    return memory
-    pass
-
-    if self.free: 
-      # Find a LEGO figure to pickup
- 
-      # biggest = 0
-      biggest_yellow = 0
-
-      new_objects = []
-      yellow_found = False
-
-      # Try, because we cannot always find an object (maybe check if objects is filled)
-      if objects:
-
-          for object in objects:
-              # Find the biggest yellow item on screen
-              if object.colour == 'yellow':
-                biggest_yellow, biggest_yellow_object = self.Check_largest(object, biggest_yellow)
-                yellow_found = True
-              # If it is not yellow, add it to a new list
-              else:
-                new_objects.append(object)
-
-              # elif object.colour == 'red':
-              #   biggest_red, biggest_red_object = self.Check_largest(object, biggest_red)
-
-          # Make the old objects list the new one (now without yellow)
-          objects = new_objects
-
-          if yellow_found:
-            # Find shirt
-            head_lower = biggest_yellow_object.location[1] + biggest_yellow_object.size[1]
-
-            # Find the shirt colour
-            if objects:
-
-
-
-              for object in objects:
-                object_top = object.location[1]
-                if(object_top in range(head_lower - 20, head_lower + 20)):
-                  print('LEGO FIGURE with shirt colour {0}'.format(object.colour))
-                  if self.drive_toward_object(object):
-                    # Now the LEGO figure has been reached
-                    # playsound("arrived.ogg")    # Play the sound effect
-                    # time.sleep(2.0)             # Wait a few seconds
-                    self.free = False           # Now we are occupied
-                    goal_colour = object.colour # Set the colour to our goal TODO: i want this in an object
-                    break                       # Break out of the loop
-            else:
-              print('Cannot find shirt colour')
-
-
-          else:
-            print('No LEGO found, continuing driving')
-            # Continue driving
+      if not destination_objects:
+        # No destination object in sight
+        print('No objects, going right')
+        self.go_right(self.speed)
       
       else:
-          print('No objects found in view')
-          # Continue driving
+        self.stop()
+        # Find the tallest object (this is most probably the building)
+        tallest_building = self.Find_tallest(objects)
+        self.drive_toward_object(tallest_building)
 
-    else: # WE ARE FINDING A BUILDING HERE
-      self.stop()
-
-      # We are occupied, find the destination
-      # print("Where is the {0} building?".format(goal_colour))
-      if objects:
-        print('hi')
-        # Find one with the correct colour that is not a LEGO figure
-
-        # no_yellow = True
-        # # Dirty hack, we dont want yellow in this frame
-        # for object in objects:
-        #   if object.colour == 'yellow':
-        #     no_yellow = False
-        #     break
-
-        # if no_yellow:
-        for object in objects:
-          if object.colour == goal_colour: # This assumes only one goal color remains (maybe find biggest)
-              self.drive_toward_object(object)
-              break                       # Break out of the loop
-                # # Now the LEGO figure has been reached
-                # # playsound("arrived.ogg")    # Play the sound effect
-                # time.sleep(3.0)             # Wait a few seconds
-                # self.free = True            # Now we are occupied
-                # goal_colour = 'none'       # Set the colour to our goal TODO: i want this in an object
-                # exit(0)
-          else:
-            print('Goal not found')
-            # Continue driving
-          pass
-      else:
-        print("No objects found.")
-        # self.go_left(0.15)
-        # Continue driving
-
-    return memory
-
+      return memory
 
   def drive_toward_object(self, object):
-    x, y = object.location
+    x,y = object.location
     w,h = object.size
+    
+    object_centre = x + (w / 2)
 
-    # Find the centre of the object
-    x = x + (w / 2)
+    print('Object location: {0}. Left: {1}, Right: {2}'.format(object_centre, self.boundary_left, self.boundary_right))
 
-    print(x, y)
-    offset = 150
-
-    if y < 20: # If it reaches top of screen, it is probably very close
-      print("destination reached") # TODO: this need tweaking
-      exit(0)
-      # return True
-    elif x > (self.frame_width / 2 + offset): # Try to centre the object
+    # if y < 20: # If it reaches top of screen, it is probably very close
+    #   print("destination reached") # TODO: this need tweaking
+    #   exit(0)
+    #   # return True
+    if object_centre > self.boundary_right: # Try to centre the object
       print("drive right") # i cant think mirrored
-      self.go_right(0.2)
-      # sleep(0.2)
-      # self.stop()
-    elif x < (self.frame_width / 2 - offset):
+      self.go_right(self.speed)
+
+    elif object_centre < self.boundary_left:
       print("drive left")
-      self.go_left(0.2)
-      # sleep(0.2)
-      # self.stop()
+      self.go_left(self.speed)
+
     else:
       print("drive forward")
-      self.go_forward(0.2)
+      self.go_forward(self.speed)
       # sleep(0.2)
       # self.stop()
-    print("Object Centre: {0}, W_l: {1}, W_r: {2}".format(x, (self.frame_width / 2 - offset), (self.frame_width / 2 + offset)))
+    # print("Object Centre: {0}, W_l: {1}, W_r: {2}".format(x, (self.frame_width / 2 - offset), (self.frame_width / 2 + offset)))
 
     # return False
