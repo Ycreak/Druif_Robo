@@ -107,21 +107,8 @@ class Processor:
     # Stop motors and await new orders
     self.stop()
 
-    if memory.back_to_base:
-      destination_objects = [x for x in objects if x.colour == memory.base_colour]
-      
-      if not destination_objects:
-        self.go_left(self.speed)
-      else:
-        base_building = self.Find_tallest(destination_objects)
-        if self.drive_toward_object(base_building):
-          print('back at the base!')
-          memory.back_to_base = False
-          memory.free = True
-
-
-    elif memory.free:
-      ''' We are going to interpret the LEGO figure and bring him to his destination '''
+    #FREE STATE: We are going to interpret the LEGO figure
+    if memory.state == "Free":
 
       # If we cannot find objects, return memory
       if not objects:
@@ -144,40 +131,42 @@ class Processor:
             print('LEGO FIGURE with shirt colour {0}'.format(object.colour))
             # Set goal colour and vacancy status
             memory.goal_colour = object.colour
-            memory.free = False
+            memory.state = "driving_to_goal"
             sleep(2) # Sleep to allow for LEGO withdrawal
             return memory
 
         # If nothing is found, just return the memory
         return memory
     
-    else:
-      ''' We have a customer, let's bring him to his building '''
+    #DRIVING TO GOAL STATE: We have a customer, let's bring him to his building
+    elif memory.state == "driving_to_goal":
       print('Our destination is the {0} building.'.format(memory.goal_colour))
       
       destination_objects = [x for x in objects if x.colour == memory.goal_colour]
-      # print('dest_obj', destination_objects)
 
-      # Turn left if we have never seen our target
-      if not destination_objects and not memory.target_spotted:
-        # No destination object in sight
-        print('No objects, searching')
-        self.go_left(self.speed)
-      # If we have seen our target but lost it, drive toward that spot
-      elif not destination_objects and memory.target_spotted:
-        print('Driving from memory:', memory.spot_counter)
-        if memory.spot_counter == -1:
-          memory.spot_counter = 20
-        if memory.spot_counter > 0:
+      #We cannot find the goal
+      if not destination_objects:
+
+        # Turn left if we have never seen our target
+        if not memory.target_spotted:
+          self.go_left(self.speed)
+
+        #Drive on memory
+        elif memory.spot_counter > 0:
           memory.spot_counter -= 1
+
+          #Back to the base if we found the object
           if self.drive_toward_object(memory.last_object): #TODO: do we need if here? flex
-            memory.back_to_base = True
+            print('Reached the goal! Back to the base!')
+            memory.state = "back_to_base"
             memory.target_spotted = False
-            memory.spot_counter = -1
-          # self.drive_toward_object(memory.last_object)
+            memory.spot_counter = 20
+        
+        #Start looking for the target if we looked too long
         else:
+          memory.spot_counter = 20
           memory.target_spotted = False
-          memory.spot_counter = -1
+        
       # Target in sight, drive towards it
       else:
         memory.target_spotted = True
@@ -186,9 +175,52 @@ class Processor:
         # Find the tallest object (this is most probably the building)
         tallest_building = self.Find_tallest(destination_objects)
         memory.last_object = tallest_building
+
+        #Back to the base if we found the object
         if self.drive_toward_object(tallest_building):
-            memory.back_to_base = True
+          print('Reached the goal! Back to the base!')
+          memory.state = "back_to_base"
+          memory.target_spotted = False
+
+    #BACK TO BASE STATE: We have reached the goal, so we can return to the base
+    elif memory.state == "back_to_base":
+      destination_objects = [x for x in objects if x.colour == memory.base_colour]
+      
+      #We cannot find the goal
+      if not destination_objects:
+
+        # Turn left if we have never seen our target
+        if not memory.target_spotted:
+          self.go_left(self.speed)
+
+        #Drive on memory
+        elif memory.spot_counter > 0:
+          memory.spot_counter -= 1
+
+          #Look for new lego figure if we found the base
+          if self.drive_toward_object(memory.last_object): #TODO: do we need if here? flex
+            print('Back at the base!')
+            memory.state = "Free"
             memory.target_spotted = False
+            memory.spot_counter = 20
+
+        #Start looking for the target if we looked too long
+        else:
+          memory.spot_counter = 20
+          memory.target_spotted = False
+      
+      # Target in sight, drive towards it
+      else:
+        base_building = self.Find_tallest(destination_objects)
+
+        #Look for new lego figure if we found the base
+        if self.drive_toward_object(base_building):
+          print('Back at the base!')
+          memory.state = "Free"
+          memory.target_spotted = False
+
+    else:
+      print("This should not happen", memory.state)
     
     return memory
 
