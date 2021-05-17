@@ -73,7 +73,17 @@ class HSV_Colour():
 class Memory:
     def __init__(self):
         self.free = True
-        self.goal_colour = '' 
+        self.goal_colour = 'blue' 
+        self.target_spotted = False
+        self.spot_counter = -1
+        fake_object = Spotted_object()
+        fake_object.location = (-1,-1)
+        fake_object.colour = "FAKE"
+        fake_object.size = (-1,-1)
+        self.last_object = fake_object
+
+        self.back_to_base = False
+        self.base_colour = 'green'
 
 # Colours in HSV and BGR
 green = HSV_Colour(35,94,135,255,39,255, [0,255,0], 'green')

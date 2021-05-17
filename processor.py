@@ -107,7 +107,20 @@ class Processor:
     # Stop motors and await new orders
     self.stop()
 
-    if memory.free:
+    if memory.back_to_base:
+      destination_objects = [x for x in objects if x.colour == memory.base_colour]
+      
+      if not destination_objects:
+        self.go_left(self.speed)
+      else:
+        base_building = self.Find_tallest(destination_objects)
+        if self.drive_toward_object(base_building):
+          print('back at the base!')
+          memory.back_to_base = False
+          memory.free = True
+
+
+    elif memory.free:
       ''' We are going to interpret the LEGO figure and bring him to his destination '''
 
       # If we cannot find objects, return memory
@@ -145,18 +158,39 @@ class Processor:
       destination_objects = [x for x in objects if x.colour == memory.goal_colour]
       # print('dest_obj', destination_objects)
 
-      if not destination_objects:
+      # Turn left if we have never seen our target
+      if not destination_objects and not memory.target_spotted:
         # No destination object in sight
-        print('No objects, going right')
-        self.go_right(self.speed)
-      
+        print('No objects, searching')
+        self.go_left(self.speed)
+      # If we have seen our target but lost it, drive toward that spot
+      elif not destination_objects and memory.target_spotted:
+        print('Driving from memory:', memory.spot_counter)
+        if memory.spot_counter == -1:
+          memory.spot_counter = 20
+        if memory.spot_counter > 0:
+          memory.spot_counter -= 1
+          if self.drive_toward_object(memory.last_object): #TODO: do we need if here? flex
+            memory.back_to_base = True
+            memory.target_spotted = False
+            memory.spot_counter = -1
+          # self.drive_toward_object(memory.last_object)
+        else:
+          memory.target_spotted = False
+          memory.spot_counter = -1
+      # Target in sight, drive towards it
       else:
-        self.stop()
+        memory.target_spotted = True
+        memory.spot_counter = -1
+        self.stop() # TODO: deprecated?
         # Find the tallest object (this is most probably the building)
-        tallest_building = self.Find_tallest(objects)
-        self.drive_toward_object(tallest_building)
-
-      return memory
+        tallest_building = self.Find_tallest(destination_objects)
+        memory.last_object = tallest_building
+        if self.drive_toward_object(tallest_building):
+            memory.back_to_base = True
+            memory.target_spotted = False
+    
+    return memory
 
   def drive_toward_object(self, object):
     x,y = object.location
@@ -165,11 +199,12 @@ class Processor:
     object_centre = x + (w / 2)
 
     print('Object location: {0}. Left: {1}, Right: {2}'.format(object_centre, self.boundary_left, self.boundary_right))
+    print('Object dimensions: (x,y): ({0},{1}), (w,h): ({2},{3})'.format(x, y, w, h))
 
-    # if y < 20: # If it reaches top of screen, it is probably very close
-    #   print("destination reached") # TODO: this need tweaking
-    #   exit(0)
-    #   # return True
+    if h > 160 and w > 85: # If it reaches top of screen, it is probably very close
+      print("destination reached") # TODO: this need tweaking
+      return True
+
     if object_centre > self.boundary_right: # Try to centre the object
       print("drive right") # i cant think mirrored
       self.go_right(self.speed)
@@ -185,4 +220,4 @@ class Processor:
       # self.stop()
     # print("Object Centre: {0}, W_l: {1}, W_r: {2}".format(x, (self.frame_width / 2 - offset), (self.frame_width / 2 + offset)))
 
-    # return False
+    return False
