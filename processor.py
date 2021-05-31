@@ -1,17 +1,17 @@
+# Optional: multithread camera
+
 from playsound import playsound
 import time
+from gtts import gTTS
+from io import BytesIO
 
 # Motor
 from gpiozero import Motor
 from time import sleep
 import RPi.GPIO as GPIO  
 
-
-class Goal:
-  def __init__(self, colour):
-
-    # self.goal = goal
-    self.colour = colour
+from pydub import AudioSegment
+from pydub.playback import play
 
 class Processor:
   def __init__(self, frame_width, frame_height):
@@ -25,9 +25,8 @@ class Processor:
     self.width = frame_width
     self.height = frame_height
 
-    # Vacancy of the ride
-    self.free = False
-    self.speed = 0.15
+    self.drive_back_counter_default = 20
+    self.speed = 0.18
     self.offset = 75
 
     self.boundary_left = self.width/2 - self.offset
@@ -35,15 +34,15 @@ class Processor:
 
   def go_left(self, speed):
     self.motor_left.backward(speed)
-    # self.motor_right.forward(speed)
+    self.motor_right.forward(speed - 0.05)
 
   def go_right(self, speed):
-    # self.motor_left.forward(speed)
+    self.motor_left.forward(speed - 0.05)
     self.motor_right.backward(speed)
 
   def go_forward(self, speed):
-    self.motor_left.forward(speed)
-    self.motor_right.forward(speed)
+    self.motor_left.forward(speed - 0.05)
+    self.motor_right.forward(speed- 0.05)
 
   def go_backward(self, speed):
     self.motor_left.backward(speed)
@@ -53,9 +52,9 @@ class Processor:
     self.motor_left.stop()
     self.motor_right.stop()
 
-  def drive(self, right, left):
-    self.motor_left.forward(left)
-    self.motor_right.forward(right)
+  # def drive(self, right, left):
+  #   self.motor_left.forward(left)
+  #   self.motor_right.forward(right)
 
   def Find_largest(self, objects, colour):
     
@@ -93,6 +92,19 @@ class Processor:
 
     return tallest_object
 
+  def Play_string(self, string, lang='en'):
+    # get audio from server
+    tts = gTTS(text=string, lang=lang)
+    # convert to file-like object
+    fp = BytesIO()
+    tts.write_to_fp(fp)
+    fp.seek(0)
+
+    song = AudioSegment.from_file(fp, format="mp3")
+    play(song)
+
+    return
+
   def main(self, memory, objects):   
     """
     1. Search for LEGO Figures.
@@ -103,12 +115,25 @@ class Processor:
     Args:
         objects ([type]): [description]
     """    
-
     # Stop motors and await new orders
     self.stop()
 
+    if memory.drive_back:
+      # If we need to drive a bit back, do that first
+      self.go_backward(self.speed)
+      memory.drive_back_counter -= 1
+      if memory.drive_back_counter <= 0:
+        memory.drive_back = False
+      
+      return memory
+
     #FREE STATE: We are going to interpret the LEGO figure
     if memory.state == "Free":
+
+      if time.time() - memory.start_time > 10.0:
+        message = 'No more customers? I will get some coffee.'
+        self.Play_string(message, 'en')
+        exit(0)
 
       # If we cannot find objects, return memory
       if not objects:
@@ -129,10 +154,14 @@ class Processor:
         for object in objects:
           if(object.location[1] in range(lego_neck - 20, lego_neck + 20)) and object.colour != 'yellow':
             print('LEGO FIGURE with shirt colour {0}'.format(object.colour))
+
             # Set goal colour and vacancy status
             memory.goal_colour = object.colour
+            message = 'Hello Mister {0}, I am driving you to the {0} building!'.format(memory.goal_colour)
+            self.Play_string(message)
+            
             memory.state = "driving_to_goal"
-            sleep(2) # Sleep to allow for LEGO withdrawal
+            # sleep(2) # Sleep to allow for LEGO withdrawal
             return memory
 
         # If nothing is found, just return the memory
@@ -146,21 +175,30 @@ class Processor:
 
       #We cannot find the goal
       if not destination_objects:
+        print('I cannot see the building!')
 
         # Turn left if we have never seen our target
         if not memory.target_spotted:
+          print('I lost the building for too long... Looking for the building again!')
           self.go_left(self.speed)
 
         #Drive on memory
         elif memory.spot_counter > 0:
           memory.spot_counter -= 1
 
+          print('Driving on memory! Spot Counter: ', memory.spot_counter)
+
           #Back to the base if we found the object
           if self.drive_toward_object(memory.last_object): #TODO: do we need if here? flex
             print('Reached the goal! Back to the base!')
+            message = 'Goodbye Mister {0}. I am returning to base.'.format(memory.goal_colour)
+            self.Play_string(message)
+
             memory.state = "back_to_base"
             memory.target_spotted = False
             memory.spot_counter = 20
+            memory.drive_back = True
+            memory.drive_back_counter = self.drive_back_counter_default
         
         #Start looking for the target if we looked too long
         else:
@@ -170,7 +208,7 @@ class Processor:
       # Target in sight, drive towards it
       else:
         memory.target_spotted = True
-        memory.spot_counter = -1
+        memory.spot_counter = 20
         self.stop() # TODO: deprecated?
         # Find the tallest object (this is most probably the building)
         tallest_building = self.Find_tallest(destination_objects)
@@ -179,13 +217,17 @@ class Processor:
         #Back to the base if we found the object
         if self.drive_toward_object(tallest_building):
           print('Reached the goal! Back to the base!')
+          message = 'Goodbye Mister {0}. I am returning to base.'.format(memory.goal_colour)
+          self.Play_string(message)
           memory.state = "back_to_base"
           memory.target_spotted = False
+          memory.drive_back = True
+          memory.drive_back_counter = self.drive_back_counter_default
 
     #BACK TO BASE STATE: We have reached the goal, so we can return to the base
     elif memory.state == "back_to_base":
       destination_objects = [x for x in objects if x.colour == memory.base_colour]
-      
+      print('I am returning to base')
       #We cannot find the goal
       if not destination_objects:
 
@@ -200,9 +242,14 @@ class Processor:
           #Look for new lego figure if we found the base
           if self.drive_toward_object(memory.last_object): #TODO: do we need if here? flex
             print('Back at the base!')
+            message = 'We have arrived at the base! Looking for new customers!'.format(memory.goal_colour)
+            self.Play_string(message)
             memory.state = "Free"
+            memory.start_time = time.time()
             memory.target_spotted = False
             memory.spot_counter = 20
+            memory.drive_back = True
+            memory.drive_back_counter = self.drive_back_counter_default
 
         #Start looking for the target if we looked too long
         else:
@@ -215,9 +262,13 @@ class Processor:
 
         #Look for new lego figure if we found the base
         if self.drive_toward_object(base_building):
-          print('Back at the base!')
+          message = 'We have arrived at the base! Looking for new customers!'.format(memory.goal_colour)
+          self.Play_string(message)
           memory.state = "Free"
+          memory.start_time = time.time()
           memory.target_spotted = False
+          memory.drive_back = True
+          memory.drive_back_counter = self.drive_back_counter_default
 
     else:
       print("This should not happen", memory.state)
@@ -233,7 +284,7 @@ class Processor:
     print('Object location: {0}. Left: {1}, Right: {2}'.format(object_centre, self.boundary_left, self.boundary_right))
     print('Object dimensions: (x,y): ({0},{1}), (w,h): ({2},{3})'.format(x, y, w, h))
 
-    if h > 160 and w > 85: # If it reaches top of screen, it is probably very close
+    if h > 160 and w > 85: #and y < 30: # If it reaches top of screen, it is probably very close
       print("destination reached") # TODO: this need tweaking
       return True
 

@@ -7,6 +7,7 @@ from processor import Processor
 # Capturing video through webcam
 
 import sys
+import time
 
 width = 320
 height = 240
@@ -73,24 +74,29 @@ class HSV_Colour():
 class Memory:
     def __init__(self):
         self.state = "Free"
-        self.goal_colour = 'blue' 
+        self.goal_colour = 'green' 
         self.target_spotted = False
-        self.spot_counter = 20
+        self.spot_counter = 10
         fake_object = Spotted_object()
         fake_object.location = (-1,-1)
         fake_object.colour = "FAKE"
         fake_object.size = (-1,-1)
         self.last_object = fake_object
-        self.base_colour = 'green'
+        self.base_colour = 'yellow'
+
+        self.start_time = time.time()
+
+        self.drive_back = False
+        self.drive_back_counter = 20
 
 # Colours in HSV and BGR
 green = HSV_Colour(35,94,135,255,39,255, [0,255,0], 'green')
 blue = HSV_Colour(105,140,90,255,35,255, [255,0,0], 'blue')
-red = HSV_Colour(169,180,55,255,51,255, [0,0,255], 'red')
+red = HSV_Colour(0,10,55,255,51,255, [0,0,255], 'red')
 yellow = HSV_Colour(21,40,50,255,90,255, [0,255,255], 'yellow')
 
 run = False
-displayWindows = True
+displayWindows = False
 memory = Memory()
 
 try:
