@@ -1,3 +1,5 @@
+# This program allows to finetune masks using HSV values
+
 from __future__ import print_function
 import cv2 as cv
 import argparse
