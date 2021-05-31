@@ -31,11 +31,12 @@ class Processor:
     self.width = frame_width
     self.height = frame_height
 
+    # Amount of frames to drive backwards
     self.drive_back_counter_default = 20
-    self.speed = 0.18
-    self.offset = 75
+    self.speed = 0.18 # Motor speed (percentage)
+    self.offset = 75  # Offset to determine boundaries
 
-    self.boundary_left = self.width / 2 - self.offset
+    self.boundary_left = self.width / 2 - self.offset   # Between it is center
     self.boundary_right = self.width / 2 + self.offset
 
     """ Methods to move the robot in certain directions

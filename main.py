@@ -1,3 +1,8 @@
+""" Robotics 2021
+Job van der Zwaag, Philippe Bors, Luuk Nolden
+DRUIF LEGUBER
+"""  
+
 # Python code for Multiple Color Detection
 import numpy as np
 from cv2 import cv2
