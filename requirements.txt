@@ -1,7 +1,9 @@
 numpy
 opencv-python
-colour
+RPi.GPIO
+gpiozero
+gtts
+pydub
 
-playsound
 
           

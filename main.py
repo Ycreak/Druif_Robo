@@ -2,7 +2,6 @@
 import numpy as np
 from cv2 import cv2
 
-from colour import Color
 from processor import Processor
 # Capturing video through webcam
 

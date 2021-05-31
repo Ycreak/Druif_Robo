@@ -1,6 +1,3 @@
-# Optional: multithread camera
-
-from playsound import playsound
 import time
 from gtts import gTTS
 from io import BytesIO
